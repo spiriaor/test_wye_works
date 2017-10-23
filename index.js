@@ -90,28 +90,28 @@ var groupByDecade = function(albums) {
 
 
 
-var fileContents = fs.readFileSync('discography.txt').toString();
+var fileContents = fs.readFileSync('files/discography.txt').toString();
 var albums = extractAlbums(fileContents)
 sortAlbums(albums)
 var groupedAlbums = groupByDecade(albums)
 
 
-createBoard(function(response){
-  var boardId = response.id
+createBoard(function(boardRespone){
+  var boardId = boardRespone.id
   var decades = Object.keys(groupedAlbums)
-
 
   let lists = decades.reduce((promiseChain, decade) => {
     return promiseChain.then(() => new Promise((resolve) => {
-      createList(decade, boardId, function(){
-        console.log(response)
-        var cardId = response.id
+      createList(decade, boardId, function(listResponse){
+        
+        var listId = listResponse.id
+
 
         //****** ACA VAN LAS CARDS
         let cards = groupedAlbums[decade].reduce((promiseChain, album) => {
           return promiseChain.then(() => new Promise((resolveCard) => {
             var cardName = (album.year + " - " + album.name)
-            createCard(cardName, cardId, function(){
+            createCard(cardName, listId, function(){
               resolveCard()
             })
           }));
