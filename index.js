@@ -1,8 +1,17 @@
 #!/usr/bin/env node
 
 var fs = require('fs')
-var program = require('commander');
 var Trello = require("node-trello");
+var Spotify = require('node-spotify-api');
+var stringSimilarity = require('string-similarity');
+
+
+var t = new Trello("307361bec06b5f664932282b50fb8f87", "71fc14193997e9bd5f91b9600e87bacae3ab354b0d68e9c181241594ded44526");
+
+var spotify = new Spotify({
+  id: "3f7af8827e53456dadff2ca65329097b",
+  secret: "38fae628bcc24ed6a6f3638f6a90325d"
+});
 
 Array.prototype.clean = function(deleteValue) {
   for (var i = 0; i < this.length; i++) {
@@ -25,23 +34,11 @@ var extractAlbums = function(rawData) {
   })
 }
 
-// program
-//   .arguments('<file>')
-//   .option('-u, --username <username>', 'The user to authenticate as')
-//   .option('-p, --password <password>', 'The user\'s password')
-//   .action(function(file) {
-//     console.log('user: %s pass: %s file: %s',
-//       program.username, program.password, file);
-//   })
-// .parse(process.argv);
-
-var t = new Trello("307361bec06b5f664932282b50fb8f87", "71fc14193997e9bd5f91b9600e87bacae3ab354b0d68e9c181241594ded44526");
-
 var createBoard = function(callback){
   t.post(
     "/1/boards/", 
     { 
-      name: "prueba 8",
+      name: "prueba 20",
       defaultLists: false
     },
     function(err, response) {
@@ -85,11 +82,6 @@ var groupByDecade = function(albums) {
   return decades
 }
 
-
-
-
-
-
 var fileContents = fs.readFileSync('files/discography.txt').toString();
 var albums = extractAlbums(fileContents)
 sortAlbums(albums)
@@ -111,8 +103,12 @@ createBoard(function(boardRespone){
         let cards = groupedAlbums[decade].reduce((promiseChain, album) => {
           return promiseChain.then(() => new Promise((resolveCard) => {
             var cardName = (album.year + " - " + album.name)
-            createCard(cardName, listId, function(){
-              resolveCard()
+            console.log(`cardName: ${cardName}`)
+            getCoverArtUrl(album.name, function(coverArtUrl){
+              console.log(`coverArtUrl: ${coverArtUrl}`)
+              createCard(cardName, listId, coverArtUrl, function(){
+                resolveCard()
+              })
             })
           }));
         }, Promise.resolve());
@@ -129,15 +125,21 @@ createBoard(function(boardRespone){
 })
 
 
-var createCard = function(name, listId, callback){
-  t.post(
-    "/1/cards/", 
-    { 
+var createCard = function(name, listId, coverArtUrl, callback){
+  var params = { 
       name: name,
       idList: listId,
-      pos: 'bottom'
-    },
+      pos: 'bottom'      
+  }
+  if(coverArtUrl){
+    params.urlSource = coverArtUrl
+  }
+  t.post(
+    "/1/cards/", 
+    params,
     function(err, response) {
+      console.log(err)
+      console.log(response)
       if (err) throw err;
         callback(response)
       }
@@ -159,3 +161,34 @@ var createList = function(name, boardId, callback){
       }
     );  
 }
+
+var lookForBestMatch = function(name, albums){
+  var bestMatchValue = 0
+  var bestMatch
+  for(var albumKey in Object.keys(albums)){
+    var similarity = stringSimilarity.compareTwoStrings(name, albums[albumKey].name)
+    if(similarity > bestMatchValue){
+      bestMatchValue = similarity
+      bestMatch = albums[albumKey]
+    }
+  }
+  return bestMatch
+}
+ 
+var getCoverArtUrl = function(albumName, callback){
+  var formattedAlbumName = encodeURI(albumName)//.replace(/ /g,"+")
+
+  console.log(formattedAlbumName)
+  spotify.search({ type: 'album', query: `artist:Bob+Dylan album:${formattedAlbumName}` }, function(err, data) {
+    if(data && data.albums.items.length == 0){
+      return callback(null)
+    }
+    if (err) {
+      return console.log('Error occurred: ' + err);
+    }
+    var selectedAlbum = lookForBestMatch(albumName, data.albums.items)
+    return callback(selectedAlbum.images[0].url)
+  });
+}
+
+// getCoverArtUrl("Bob Dylan", function(){})
