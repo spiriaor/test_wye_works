@@ -4,6 +4,9 @@ const TXT_YEAR_NAME_SEPARATOR_POSITION = 4
 
 module.exports = {
 
+  /*
+   * Takes raw data read from the file and extracts an album object from each line. Returns array of album objects.
+   */
   extractAlbums: function(rawData) {
     const rawLines = rawData.split("\n")
     rawLines.clean('')
@@ -15,6 +18,10 @@ module.exports = {
     })
   },
 
+
+  /*
+   * Sorts the array of albums. First by year and then by name.
+   */
   sortAlbums: function(albums) {
 
     function comparator(a, b) {
@@ -33,6 +40,9 @@ module.exports = {
     albums.sort(comparator);
   },
 
+  /*
+   * Groups the albums by decades. Returns an object that contains arrays with the albums for each decade.
+   */
   groupByDecade: function(albums) {
     const getDecade = function(album){
       return Math.floor(album.year/10)*10

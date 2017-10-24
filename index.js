@@ -21,33 +21,39 @@ const groupedAlbums = dataProcessor.groupByDecade(albums)
 /*
  * Create trello board
  */
-trelloProxy.createBoard("tabla 233", function(boardRespone){
-  const boardId = boardRespone.id
-  const decades = Object.keys(groupedAlbums)
+const BOARD_NAME = "TABLA 45454SP"
+trelloProxy.createBoard(BOARD_NAME, function(boardRespone){
+  createLists(boardRespone.id, Object.keys(groupedAlbums))
+})
 
+
+
+
+
+const createLists = function(boardId, decades){
   const lists = decades.reduce((promiseChain, decade) => {
     return promiseChain.then(() => new Promise((resolve) => {
       trelloProxy.createList(decade, boardId, function(listResponse){
-        
-        let listId = listResponse.id
-
-        let cards = groupedAlbums[decade].reduce((promiseChain, album) => {
-          return promiseChain.then(() => new Promise((resolveCard) => {
-            let cardName = (album.year + " - " + album.name)
-            spotifyProxy.getCoverArtUrl(album.name, function(coverArtUrl){
-              trelloProxy.createCard(cardName, listId, coverArtUrl, function(){
-                resolveCard()
-              })
-            })
-          }));
-        }, Promise.resolve());
-          
-        cards.then(() => console.log('done with cards for list'))
-
+        createCards(listResponse.id, decade)
         resolve()
       })
     }));
   }, Promise.resolve());
     
-  lists.then(() => console.log('done with Lists'))
-})
+  lists.then(() => console.log('All lists have been created'))
+}
+
+const createCards = function(listId, decade){
+  let cards = groupedAlbums[decade].reduce((promiseChain, album) => {
+    return promiseChain.then(() => new Promise((resolveCard) => {
+      let cardName = (album.year + " - " + album.name)
+      spotifyProxy.getCoverArtUrl(album.name, function(coverArtUrl){
+        trelloProxy.createCard(cardName, listId, coverArtUrl, function(){
+          resolveCard()
+        })
+      })
+    }));
+  }, Promise.resolve());
+    
+  cards.then(() => console.log('All cards have been created'))
+}
