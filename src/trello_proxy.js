@@ -2,6 +2,11 @@ const Trello = require("node-trello");
 
 const TRELLO_CLIENT_ID = "307361bec06b5f664932282b50fb8f87"
 const TRELLO_CLIENT_SECRET = "71fc14193997e9bd5f91b9600e87bacae3ab354b0d68e9c181241594ded44526"
+const API_BOARDS_URI = "/1/boards/"
+const API_CARDS_URI = "/1/cards/"
+const API_LISTS_URI = "/1/lists/"
+const ADD_AT_THE_END_POS_VALUE = "bottom"
+
 
 /*
  * Initialize Trello
@@ -15,7 +20,7 @@ module.exports = {
    */
   createBoard: function(name, callback){
     t.post(
-      "/1/boards/", 
+      API_BOARDS_URI, 
       { 
         name: name,
         defaultLists: false
@@ -31,16 +36,16 @@ module.exports = {
    * Creates a card and calls callback with the response as first parameter
    */
   createCard: function(name, listId, coverArtUrl, callback){
-    var params = { 
+    let params = { 
         name: name,
         idList: listId,
-        pos: 'bottom'      
+        pos: ADD_AT_THE_END_POS_VALUE
     }
     if(coverArtUrl){
       params.urlSource = coverArtUrl
     }
     t.post(
-      "/1/cards/", 
+      API_CARDS_URI, 
       params,
       function(err, response) {
         if (err) throw err;
@@ -54,11 +59,11 @@ module.exports = {
    */
   createList: function(name, boardId, callback){
     t.post(
-      "/1/lists/", 
+      API_LISTS_URI, 
       { 
         name: name,
         idBoard: boardId,
-        pos: 'bottom'
+        pos: ADD_AT_THE_END_POS_VALUE
       },
       function(err, response) {
         if (err) throw err;
