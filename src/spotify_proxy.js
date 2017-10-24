@@ -17,11 +17,11 @@ const spotify = new Spotify({
 /*
  * Spotify returns every album that matches with the query so this method gets the one that matches the most
  */
-var lookForBestMatch = function(name, albums){
-  var bestMatchValue = 0
-  var bestMatch
-  for(var albumKey in Object.keys(albums)){
-    var similarity = stringSimilarity.compareTwoStrings(name, albums[albumKey].name)
+const lookForBestMatch = function(name, albums){
+  let bestMatchValue = 0
+  let bestMatch
+  for(let albumKey in Object.keys(albums)){
+    let similarity = stringSimilarity.compareTwoStrings(name, albums[albumKey].name)
     if(similarity > bestMatchValue){
       bestMatchValue = similarity
       bestMatch = albums[albumKey]
@@ -36,7 +36,7 @@ module.exports = {
    * Gets the url of the cover art image for the album and passes it as the first parameter to callback.
    */
   getCoverArtUrl: function(albumName, callback){
-    var formattedAlbumName = encodeURI(albumName)
+    const formattedAlbumName = encodeURI(albumName)
 
     spotify.search({ type: 'album', query: `artist:${ARTIST} album:${formattedAlbumName}` }, function(err, data) {
       if(data && data.albums.items.length == 0){
@@ -45,7 +45,7 @@ module.exports = {
       if (err) {
         return console.log('Error occurred: ' + err);
       }
-      var selectedAlbum = lookForBestMatch(albumName, data.albums.items)
+      const selectedAlbum = lookForBestMatch(albumName, data.albums.items)
       return callback(selectedAlbum.images[0].url)
     });
   }
